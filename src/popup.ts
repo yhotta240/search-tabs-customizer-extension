@@ -8,7 +8,7 @@ import meta from '../public/manifest.meta.json';
 
 class PopupManager {
   private panel: PopupPanel;
-  private enabled: boolean = false;
+  private enabled: boolean = true;
   private enabledElement: HTMLInputElement | null;
   private manifestData: chrome.runtime.Manifest;
   private manifestMetadata: { [key: string]: any } = (meta as any) || {};
@@ -26,7 +26,7 @@ class PopupManager {
   private loadInitialState(): void {
     chrome.storage.local.get(['settings', 'enabled'], (data) => {
       if (this.enabledElement) {
-        this.enabled = data.enabled || false;
+        this.enabled = data.enabled ?? this.enabled;
         this.enabledElement.checked = this.enabled;
       }
       this.showMessage(`${this.manifestData.short_name} が起動しました`);
@@ -110,15 +110,23 @@ class PopupManager {
   }
 
   private setupInfoTab(): void {
+    const storeLink = document.getElementById('store_link') as HTMLAnchorElement;
+    if (storeLink) {
+      storeLink.href = `https://chrome.google.com/webstore/detail/${chrome.runtime.id}`;
+      clickURL(storeLink);
+    }
+
     const extensionLink = document.getElementById('extension_link') as HTMLAnchorElement;
     if (extensionLink) {
       extensionLink.href = `chrome://extensions/?id=${chrome.runtime.id}`;
       clickURL(extensionLink);
     }
 
-    clickURL(document.getElementById('issue-link'));
-    clickURL(document.getElementById('store_link'));
-    clickURL(document.getElementById('github-link'));
+    const issueLink = document.getElementById('issue-link') as HTMLAnchorElement;
+    if (issueLink) {
+      issueLink.href = `https://forms.gle/qkaaa2E49GQ5QKMT8`;
+      clickURL(issueLink);
+    }
 
     const extensionId = document.getElementById('extension-id');
     if (extensionId) {
@@ -174,6 +182,7 @@ class PopupManager {
     const githubLink = document.getElementById('github-link') as HTMLAnchorElement;
     githubLink.href = this.manifestMetadata.github_url;
     githubLink.textContent = this.manifestMetadata.github_url;
+    clickURL(githubLink);
   }
 
   /**
