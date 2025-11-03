@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Chrome Extension Starter Kit",
-  "short_name": "Chrome Extension Starter Kit",
+  "name": "Search Tabs Customizer - 検索結果タブカスタマイズ",
+  "short_name": "Search Tabs Customizer",
   "version": "0.1.0",
-  "description": "",
+  "description": "Google や Bing の検索結果ページ内のタブを編集・非表示・追加できます",
   "icons": {
     "48": "icons/icon.png"
   },
