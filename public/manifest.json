@@ -20,5 +20,11 @@
       "matches": ["https://www.google.com/*", "https://www.bing.com/*"],
       "js": ["content.js"]
     }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/*.png"],
+      "matches": ["https://www.google.com/*", "https://www.bing.com/*"]
+    }
   ]
 }
