@@ -1,8 +1,31 @@
 const path = require("path");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
+const ExtensionReloader = require("./scripts/ext-reloader");
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+
+const isDev = process.env.NODE_ENV === "development";
+const plugins = [];
+
+if (isDev) {
+  plugins.push(new ExtensionReloader());
+} else {
+  plugins.push(new CleanWebpackPlugin());
+}
+
+plugins.push(
+  new CopyWebpackPlugin({
+    patterns: [
+      {
+        from: "./public",
+        to: "./"
+      }
+    ]
+  })
+);
 
 module.exports = {
-  mode: "production",
+  mode: isDev ? "development" : "production",
+  devtool: isDev ? "cheap-module-source-map" : false,
   entry: {
     background: "./src/background.ts",
     content: "./src/content.ts",
@@ -28,16 +51,7 @@ module.exports = {
       }
     ]
   },
-  plugins: [
-    new CopyWebpackPlugin({
-      patterns: [
-        {
-          from: "./public",
-          to: "./"
-        }
-      ]
-    })
-  ],
+  plugins: plugins,
   performance: {
     hints: false
   }
