@@ -1,4 +1,6 @@
-export class PopupPanel {
+export class ModalPanel {
+  private root: Document;
+  private win: Window;
   private header: HTMLElement;
   private tabMenu: HTMLElement;
   private maximizeButton: HTMLButtonElement;
@@ -9,6 +11,7 @@ export class PopupPanel {
   private panel: HTMLElement;
   private messageDiv: HTMLElement;
   private clearButton: HTMLButtonElement;
+  private messageClearIcon: HTMLImageElement;
 
   private startY: number = 0;
   private tmpPanelHeight: number = 0;
@@ -16,17 +19,20 @@ export class PopupPanel {
   private emdHeight: number = 150;
   private isDragging: boolean = false;
 
-  constructor() {
-    this.header = document.querySelector('#header')!;
-    this.tabMenu = document.querySelector('#tab-menu')!;
-    this.maximizeButton = document.querySelector("#maximize-button")!;
-    this.minimizeButton = document.querySelector("#minimize-button")!;
-    this.closeButton = document.querySelector("#close-button")!;
-    this.panelButton = document.querySelector("#panel-button")!;
-    this.resizer = document.getElementById('resizer')!;
-    this.panel = document.getElementById('panel')!;
-    this.messageDiv = document.getElementById('message')!;
-    this.clearButton = document.querySelector('#clear-button')!;
+  constructor(root: Document = document) {
+    this.root = root;
+    this.win = (this.root.defaultView as Window) || window;
+    this.header = this.root.querySelector('#header')!;
+    this.tabMenu = this.root.querySelector('#tab-menu')!;
+    this.maximizeButton = this.root.querySelector("#maximize-button")!;
+    this.minimizeButton = this.root.querySelector("#minimize-button")!;
+    this.closeButton = this.root.querySelector("#close-button")!;
+    this.panelButton = this.root.querySelector("#panel-button")!;
+    this.resizer = this.root.querySelector('#resizer')!;
+    this.panel = this.root.querySelector('#panel')!;
+    this.messageDiv = this.root.querySelector('#message')!;
+    this.clearButton = this.root.querySelector('#clear-button')!;
+    this.messageClearIcon = this.root.querySelector('#message-clear-icon')!;
 
     this.initializePanel();
     this.addEventListeners();
@@ -36,11 +42,13 @@ export class PopupPanel {
     this.panel.style.display = 'block';
     this.panel.style.height = '0';
     this.closeButton.style.display = 'none';
+    this.messageClearIcon.src = chrome.runtime.getURL('icons/list_clear.png');
+
     this.switchMinMaxButtons();
   }
 
   private getPanelHeight(): number {
-    return document.documentElement.clientHeight - this.tabMenu.offsetHeight - this.resizer.offsetHeight;
+    return this.root.documentElement.clientHeight - this.tabMenu.offsetHeight - this.resizer.offsetHeight;
   }
 
   private togglePanel(isOpen: boolean): void {
@@ -90,7 +98,7 @@ export class PopupPanel {
       this.tmpPanelHeight = (this.panel.offsetHeight === 0 || this.panel.offsetHeight === this.getPanelHeight() || parseFloat(this.panel.style.height) > this.getPanelHeight() - 15) ? 150 : this.panel.offsetHeight;
     });
 
-    window.addEventListener('mousemove', (e: MouseEvent) => {
+    this.win.addEventListener('mousemove', (e: MouseEvent) => {
       if (this.isDragging) {
         if (this.header.offsetHeight >= e.clientY - 20) {
           this.panel.style.height = `${this.getPanelHeight()}px`;
@@ -104,7 +112,7 @@ export class PopupPanel {
       }
     });
 
-    window.addEventListener('mouseup', () => {
+    this.win.addEventListener('mouseup', () => {
       if (this.isDragging) {
         this.isDragging = false;
         this.panel.classList.remove('no-transition');
@@ -134,15 +142,6 @@ export class PopupPanel {
       this.togglePanel(true);
       this.panel.style.height = `${this.tmpPanelHeight}px`;
       this.switchMinMaxButtons();
-    });
-
-    window.addEventListener('resize', () => {
-      const currentHeight = parseFloat(this.panel.style.height);
-      const maxHeight = this.getPanelHeight();
-      this.panel.style.height = `${Math.min(currentHeight, maxHeight)}px`;
-      if (this.minimizeButton.style.display === 'block') {
-        this.panel.style.height = `${maxHeight}px`;
-      }
     });
 
     this.clearButton.addEventListener('click', () => {

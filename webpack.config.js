@@ -2,6 +2,7 @@ const path = require("path");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const ExtensionReloader = require("./scripts/ext-reloader");
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 const isDev = process.env.NODE_ENV === "development";
 const plugins = [];
@@ -20,6 +21,9 @@ plugins.push(
         to: "./"
       }
     ]
+  }),
+  new MiniCssExtractPlugin({
+    filename: '[name].css',
   })
 );
 
@@ -29,7 +33,8 @@ module.exports = {
   entry: {
     background: "./src/background.ts",
     content: "./src/content.ts",
-    popup: "./src/popup.ts"
+    modal: "./src/modal.ts",
+    bootstrap: ["bootstrap/dist/css/bootstrap.min.css", "bootstrap/dist/js/bootstrap.bundle.min.js"],
   },
   output: {
     path: path.resolve(__dirname, "dist"),
@@ -42,7 +47,7 @@ module.exports = {
     rules: [
       {
         test: /\.css$/,
-        use: ['style-loader', 'css-loader'],
+        use: [MiniCssExtractPlugin.loader, 'css-loader'],
       },
       {
         test: /\.tsx?$/,

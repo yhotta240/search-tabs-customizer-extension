@@ -1,12 +1,18 @@
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import { ISiteAdapter } from 'types/site-adapter';
 import { IconManager } from './content/icon-manager';
 import { SiteAdapter } from './content/adapters/site-adapter';
+import { ModalManager } from './content/modal-manager';
+// import modalManager from "./modal";
 
 class ContentScript {
   private adapter: ISiteAdapter | null = null;
+  private modalManager: ModalManager;
 
   constructor() {
-    console.log("content scripts loaded from src/content.ts");
+    this.modalManager = new ModalManager();
+
     this.init();
   }
 
@@ -19,11 +25,11 @@ class ContentScript {
 
   private initTabs(adapter: ISiteAdapter) {
     const iconManager = new IconManager();
-    iconManager.click(() => {
-      console.log("Icon clicked callback from content.ts")
+    iconManager.click(async () => {
+      await this.modalManager.show();
     });
+
     const tabsContainer = adapter.findTabsContainer();
-    console.log("Tabs container found:", tabsContainer);
 
     if (!tabsContainer || adapter.hasCustomIcon()) {
       return;

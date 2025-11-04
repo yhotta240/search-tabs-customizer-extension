@@ -5,14 +5,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title id="title"></title>
-  <link rel="stylesheet" href="popup.css">
+  <link id="modal-styles" rel="stylesheet" href="">
 </head>
 
-<body class="container-md pb-3 p-2 " id="popup-body">
+<body class="container-md pb-3 p-2 " id="modal-body">
   <div id="header">
     <div class="d-flex justify-content-between align-items-center p-1">
       <div class="d-flex justify-content-center align-items-center">
-        <img src="/icons/icon.png" class="my-auto mx-2" alt="message clear button" height="24">
+        <img src="" class="my-auto mx-2" alt="message clear button" height="24" id="title-icon">
         <h1 class="my-auto fs-3" id="title-header"></h1>
       </div>
       <button type="button" class="btn btn-sm btn-light p-1 me-2" id="new-tab-button" aria-label="新しいタブで開く"
@@ -357,7 +357,7 @@
           <!-- クリアボタン -->
           <button type="button" class="btn btn-sm btn-light p-0 me-1" id="clear-button" title="メッセージクリア"
             style="width: 20px; height: 20px; display: flex; justify-content: center; align-items: center;">
-            <img src="../icons/list_clear.png" alt="message clear button" height="20" class="img-fluid">
+            <img src="" alt="message clear button" height="20" class="img-fluid" id="message-clear-icon">
           </button>
           <!-- 最大化ボタン -->
           <button type="button" class="btn btn-sm btn-light p-0 me-1" id="maximize-button" title="最大化"
@@ -424,5 +424,5 @@
   </div>
 
   <!-- スクリプトのリンク -->
-  <script src="popup.js"></script>
+  <script src=""></script>
 </body>
