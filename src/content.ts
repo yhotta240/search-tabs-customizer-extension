@@ -1,5 +1,3 @@
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import { ISiteAdapter } from 'types/site-adapter';
 import { IconManager } from './content/icon-manager';
 import { SiteAdapter } from './content/adapters/site-adapter';

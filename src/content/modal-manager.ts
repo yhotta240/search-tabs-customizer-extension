@@ -5,7 +5,7 @@ import meta from '../../public/manifest.meta.json';
 import { getSiteAccessText } from "../utils/permissions";
 
 /**
- * モーダルウィンドウを管理するクラス。
+ * モーダルウィンドウを管理するクラス
  */
 export class ModalManager {
   private modalElement: HTMLElement | null = null;
@@ -100,12 +100,18 @@ export class ModalManager {
   }
 
   private setupIframeOnLoad(iframe: HTMLIFrameElement): Promise<Document | null> {
-    const link = create('link', { rel: 'stylesheet' }) as HTMLLinkElement;
-    link.href = chrome.runtime.getURL('bootstrap.css');
+    const modalStyleLink = create('link', { rel: 'stylesheet' }) as HTMLLinkElement;
+    modalStyleLink.href = chrome.runtime.getURL('modal.css');
+
+    const bootstrapLink = create('link', { rel: 'stylesheet' }) as HTMLLinkElement;
+    bootstrapLink.href = chrome.runtime.getURL('bootstrap.css');
 
     const script = create('script') as HTMLScriptElement;
     script.src = chrome.runtime.getURL('bootstrap.js');
     script.defer = true;
+
+    const iconLink = create('link', { rel: 'stylesheet' }) as HTMLLinkElement;
+    iconLink.href = chrome.runtime.getURL('bootstrap-icons.css');
 
     return new Promise((resolve) => {
       const handler = () => {
@@ -117,11 +123,10 @@ export class ModalManager {
           }
           this.iframeDoc = iframeDoc;
 
-          // CSS の重複挿入を防ぐ
-          const exists = Array.from(this.iframeDoc.head.querySelectorAll('link')).some(l => (l as HTMLLinkElement).href === link.href);
-          if (!exists) {
-            this.iframeDoc.head.appendChild(link);
-          }
+          this.iframeDoc.head.appendChild(modalStyleLink);
+          this.iframeDoc.head.appendChild(bootstrapLink);
+          this.iframeDoc.head.appendChild(iconLink);
+          this.iframeDoc.head.appendChild(script);
 
           // 必要ならここでイベントを追加
           this.modalEventListeners(this.iframeDoc);
@@ -133,8 +138,6 @@ export class ModalManager {
           } catch (e) {
             console.error('Failed to set up iframe info', e);
           }
-
-          this.iframeDoc.head.appendChild(script);
 
           resolve(this.iframeDoc);
         } catch (e) {

@@ -20,7 +20,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["icons/*.png", "modal.html", "*.css", "*.js"],
+      "resources": ["icons/*.png", "modal.html", "*.css", "*.js", "*.woff2", "*.woff"],
       "matches": ["https://www.google.com/*", "https://www.bing.com/*"]
     }
   ]
