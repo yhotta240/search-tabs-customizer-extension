@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Search Tabs Customizer - 検索結果タブカスタマイズ",
   "short_name": "Search Tabs Customizer",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Google や Bing の検索結果ページ内のタブを編集・非表示・追加できます",
   "icons": {
     "48": "icons/icon.png"
