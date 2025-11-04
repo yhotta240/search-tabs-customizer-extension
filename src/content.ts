@@ -4,7 +4,6 @@ import { ISiteAdapter } from 'types/site-adapter';
 import { IconManager } from './content/icon-manager';
 import { SiteAdapter } from './content/adapters/site-adapter';
 import { ModalManager } from './content/modal-manager';
-// import modalManager from "./modal";
 
 class ContentScript {
   private adapter: ISiteAdapter | null = null;

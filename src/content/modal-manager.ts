@@ -1,8 +1,8 @@
-import { create, clickURL } from "../utils/dom";
+import { create, get } from "../utils/dom";
 import { dateTime } from "../utils/date";
-import { getSiteAccessText } from "../utils/permissions";
 import { ModalPanel } from "../components/modal-panel";
 import meta from '../../public/manifest.meta.json';
+import { getSiteAccessText } from "../utils/permissions";
 
 /**
  * モーダルウィンドウを管理するクラス。
@@ -126,12 +126,12 @@ export class ModalManager {
           // 必要ならここでイベントを追加
           this.modalEventListeners(this.iframeDoc);
 
-          // iframe 内の UI を初期化（PopupManager 相当の処理）
+          // iframe 内の UI を初期化
           try {
-            this.initializeIframeUI(this.iframeDoc);
+            this._setUpIframeUI(this.iframeDoc);
+            this._setUpInfo(this.iframeDoc);
           } catch (e) {
-            // 初期化に失敗してもロード自体は解決する
-            console.error('Failed to initialize iframe UI', e);
+            console.error('Failed to set up iframe info', e);
           }
 
           this.iframeDoc.head.appendChild(script);
@@ -159,15 +159,14 @@ export class ModalManager {
   }
 
   private modalEventListeners(doc: Document): void {
-    const content = doc.body;
-    const closeButton = content.querySelector('#modal-close-button');
+    const closeButton = get('#modal-close-button', doc);
     if (closeButton) {
       closeButton.addEventListener('click', () => this.hide());
     }
   }
 
-  private initializeIframeUI(doc: Document): void {
-    const modalStyles = doc.getElementById('modal-styles') as HTMLLinkElement;
+  private _setUpIframeUI(doc: Document): void {
+    const modalStyles = get<HTMLLinkElement>('#modal-styles', doc);
     if (modalStyles) {
       modalStyles.href = chrome.runtime.getURL('modal.css');
     }
@@ -175,9 +174,8 @@ export class ModalManager {
     // create panel UI helper
     this.panel = new ModalPanel(doc);
 
-    const enabledElement = doc.getElementById('enabled') as HTMLInputElement | null;
+    const enabledElement = get<HTMLInputElement>('#enabled', doc);
     const manifestData = chrome.runtime.getManifest();
-    const manifestMetadata: { [key: string]: any } = (meta as any) || {};
 
     // load initial state
     chrome.storage.local.get(['settings', 'enabled'], (data) => {
@@ -200,87 +198,81 @@ export class ModalManager {
 
     // initialize UI texts and links
     const short_name = manifestData.short_name || manifestData.name;
-    const title = doc.getElementById('title');
+    const title = get('#title', doc);
     if (title) title.textContent = short_name;
-    const titleIcon = doc.getElementById('title-icon') as HTMLImageElement;
+    const titleIcon = get<HTMLImageElement>('#title-icon', doc);
     if (titleIcon) titleIcon.src = chrome.runtime.getURL('icons/icon.png');
-    const titleHeader = doc.getElementById('title-header');
+    const titleHeader = get('#title-header', doc);
     if (titleHeader) titleHeader.textContent = short_name;
-    const enabledLabel = doc.getElementById('enabled-label');
+    const enabledLabel = get('#enabled-label', doc);
     if (enabledLabel) enabledLabel.textContent = `${short_name} を有効にする`;
-    const newTabButton = doc.getElementById('new-tab-button');
-    if (newTabButton) {
-      newTabButton.addEventListener('click', () => {
-        chrome.tabs.create({ url: 'modal.html' });
-      });
-    }
+  }
 
-    // setup info tab
-    const storeLink = doc.getElementById('store_link') as HTMLAnchorElement;
-    if (storeLink) {
-      storeLink.href = `https://chrome.google.com/webstore/detail/${chrome.runtime.id}`;
-      clickURL(storeLink);
-    }
+  /** 拡張機能の情報をセットアップ */
+  private _setUpInfo(doc: Document): void {
+    const manifestData = chrome.runtime.getManifest();
 
-    const extensionLink = doc.getElementById('extension_link') as HTMLAnchorElement;
-    if (extensionLink) {
-      extensionLink.href = `chrome://extensions/?id=${chrome.runtime.id}`;
-      clickURL(extensionLink);
-    }
+    const storeLink = get<HTMLAnchorElement>('#store_link', doc);
+    storeLink?.addEventListener('click', (e) => {
+      e.preventDefault();
+      chrome.runtime.sendMessage({ action: "open-page", url: `https://chrome.google.com/webstore/detail/${chrome.runtime.id}` });
+    }, { once: true });
 
-    const issueLink = doc.getElementById('issue-link') as HTMLAnchorElement;
-    if (issueLink) {
-      issueLink.href = `https://forms.gle/qkaaa2E49GQ5QKMT8`;
-      clickURL(issueLink);
-    }
+    const extensionLink = get<HTMLAnchorElement>('#extension_link', doc);
+    extensionLink?.addEventListener('click', (e) => {
+      e.preventDefault();
+      chrome.runtime.sendMessage({ action: "open-page", url: `chrome://extensions/?id=${chrome.runtime.id}` });
+    }, { once: true });
 
-    const extensionId = doc.getElementById('extension-id');
+    const issueLink = get<HTMLAnchorElement>('#issue-link', doc);
+    issueLink?.addEventListener('click', (e) => {
+      e.preventDefault();
+      chrome.runtime.sendMessage({ action: "open-page", url: `https://forms.gle/qkaaa2E49GQ5QKMT8` });
+    }, { once: true });
+
+    const extensionId = get('#extension-id', doc);
     if (extensionId) extensionId.textContent = chrome.runtime.id;
-    const extensionName = doc.getElementById('extension-name');
+    const extensionName = get('#extension-name', doc);
     if (extensionName) extensionName.textContent = manifestData.name;
-    const extensionVersion = doc.getElementById('extension-version');
+    const extensionVersion = get('#extension-version', doc);
     if (extensionVersion) extensionVersion.textContent = manifestData.version;
-    const extensionDescription = doc.getElementById('extension-description');
+    const extensionDescription = get('#extension-description', doc);
     if (extensionDescription) extensionDescription.textContent = manifestData.description ?? '';
 
-    // chrome.permissions.getAll((result) => {
-    //   const permissionInfo = doc.getElementById('permission-info');
-    //   const permissions = result.permissions;
-    //   if (permissionInfo && permissions) {
-    //     permissionInfo.textContent = permissions.join(', ');
-    //   }
+    chrome.runtime.sendMessage({ action: 'get-permissions' }, (result) => {
+      const permissions = result.permissions;
+      const siteAccess = getSiteAccessText(permissions.origins);
 
-    //   const siteAccess = getSiteAccessText(result.origins);
-    //   const siteAccessElement = doc.getElementById('site-access');
-    //   if (siteAccessElement) siteAccessElement.innerHTML = siteAccess;
-    // });
+      get('#site-access', doc)!.innerHTML = siteAccess;
+      get('#permission-info', doc)!.innerHTML = permissions.permissions.join(", ");
 
-    // chrome.extension.isAllowedIncognitoAccess((isAllowedAccess) => {
-    //   const incognitoEnabled = doc.getElementById('incognito-enabled');
-    //   if (incognitoEnabled) incognitoEnabled.textContent = isAllowedAccess ? '有効' : '無効';
-    // });
+      const incognitoEnabled = result.incognitoEnabled;
+      get('#incognito-enabled', doc)!.innerHTML = incognitoEnabled ? "有効" : "無効";
+    });
 
     const languageMap: { [key: string]: string } = { 'en': '英語', 'ja': '日本語' };
-    const language = doc.getElementById('language') as HTMLElement;
-    const languages = (meta as any)?.languages;
-    if (language && languages) {
-      language.textContent = languages.map((lang: string) => languageMap[lang]).join(', ');
+    const language = get<HTMLElement>('#language', doc);
+    const langs = (meta as any)?.languages || [];
+    if (language && langs) {
+      language.textContent = langs.map((lang: string) => languageMap[lang]).join(', ');
     }
 
-    const publisherName = doc.getElementById('publisher-name') as HTMLElement;
+    const publisherName = get<HTMLElement>('#publisher-name', doc);
     const publisher = (meta as any)?.publisher || '不明';
     if (publisherName) publisherName.textContent = publisher;
 
-    const developerName = doc.getElementById('developer-name') as HTMLElement;
+    const developerName = get<HTMLElement>('#developer-name', doc);
     const developer = (meta as any)?.developer || '不明';
     if (developerName) developerName.textContent = developer;
 
-    const githubLink = doc.getElementById('github-link') as HTMLAnchorElement;
+    const githubLink = get<HTMLAnchorElement>('#github-link', doc);
     if (githubLink) {
       githubLink.href = (meta as any)?.github_url || '';
       githubLink.textContent = (meta as any)?.github_url || '';
-      clickURL(githubLink);
+      githubLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        chrome.runtime.sendMessage({ action: "open-page", url: githubLink.href });
+      });
     }
   }
-
 }

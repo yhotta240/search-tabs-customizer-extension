@@ -33,7 +33,6 @@ module.exports = {
   entry: {
     background: "./src/background.ts",
     content: "./src/content.ts",
-    modal: "./src/modal.ts",
     bootstrap: ["bootstrap/dist/css/bootstrap.min.css", "bootstrap/dist/js/bootstrap.bundle.min.js"],
   },
   output: {
