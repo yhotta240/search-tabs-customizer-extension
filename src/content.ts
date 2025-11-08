@@ -9,21 +9,20 @@ class ContentScript {
 
   constructor() {
     this.modalManager = new ModalManager();
-
-    this.init();
+    this._init();
   }
 
-  private init() {
+  private _init() {
     this.adapter = SiteAdapter.create(window.location.hostname);
     if (!this.adapter) return;
 
-    this.initTabs(this.adapter);
+    this._initTabs(this.adapter);
   }
 
-  private initTabs(adapter: ISiteAdapter) {
+  private _initTabs(adapter: ISiteAdapter) {
     const iconManager = new IconManager();
-    iconManager.click(async () => {
-      await this.modalManager.show();
+    iconManager.click(() => {
+      this.modalManager.show();
     });
 
     const tabsContainer = adapter.findTabsContainer();
@@ -36,4 +35,4 @@ class ContentScript {
   }
 }
 
-new ContentScript();
+const contentScript = new ContentScript();

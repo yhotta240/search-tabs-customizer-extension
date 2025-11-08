@@ -24,15 +24,17 @@ export class ModalManager {
     });
   }
 
-  async show(): Promise<void> {
+  show(): void {
     if (this.modalElement) {
       this.modalElement.style.display = 'flex';
       return;
     }
 
     // モーダルを作成して表示
-    this.modalElement = await this.createModal();
-    document.body.appendChild(this.modalElement);
+    (async () => {
+      this.modalElement = await this.createModal();
+      document.body.appendChild(this.modalElement);
+    })();
   }
 
   hide(): void {
