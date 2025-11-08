@@ -71,6 +71,7 @@ export class ModalManager {
   }
 
   private async createFrame(): Promise<HTMLIFrameElement> {
+    // modal.html を取得して Blob URL として iframe に設定する
     const htmlURL = chrome.runtime.getURL('modal.html');
     const res = await fetch(htmlURL);
     const htmlText = await res.text();
@@ -87,34 +88,68 @@ export class ModalManager {
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     `;
 
-    // setupIframeOnLoad はロード完了を解決する Promise を返す
+    // iframe のロード完了で UI 初期化を行い、表示する
     const iframeLoadPromise = this.setupIframeOnLoad(iframe);
     iframeLoadPromise.then(() => {
       iframe.style.display = 'block';
     });
 
-    // srcdoc を設定して読み込みを開始
-    iframe.srcdoc = htmlText;
+    // srcdoc より互換性の高い Blob URL を使用
+    const blob = new Blob([htmlText], { type: 'text/html' });
+    const blobUrl = URL.createObjectURL(blob);
+    iframe.src = blobUrl;
+
+    // 読み込み完了時にオブジェクト URL を解放してメモリを開放
+    iframe.addEventListener('load', () => {
+      URL.revokeObjectURL(blobUrl);
+    }, { once: true });
 
     return iframe;
   }
 
   private setupIframeOnLoad(iframe: HTMLIFrameElement): Promise<Document | null> {
-    const modalStyleLink = create('link', { rel: 'stylesheet' }) as HTMLLinkElement;
-    modalStyleLink.href = chrome.runtime.getURL('modal.css');
+    // 要素作成ヘルパー（CSS/JS リソース）
+    const makeLink = (href: string) => {
+      const l = create('link', { rel: 'stylesheet' }) as HTMLLinkElement;
+      l.href = href;
+      return l;
+    };
+    const makeScript = (src: string) => {
+      const s = create('script') as HTMLScriptElement;
+      s.src = src;
+      s.defer = true;
+      return s;
+    };
 
-    const bootstrapLink = create('link', { rel: 'stylesheet' }) as HTMLLinkElement;
-    bootstrapLink.href = chrome.runtime.getURL('bootstrap.css');
+    const modalStyleLink = makeLink(chrome.runtime.getURL('modal.css'));
+    const bootstrapLink = makeLink(chrome.runtime.getURL('bootstrap.css'));
+    const iconLink = makeLink(chrome.runtime.getURL('bootstrap-icons.css'));
+    const script = makeScript(chrome.runtime.getURL('bootstrap.js'));
 
-    const script = create('script') as HTMLScriptElement;
-    script.src = chrome.runtime.getURL('bootstrap.js');
-    script.defer = true;
-
-    const iconLink = create('link', { rel: 'stylesheet' }) as HTMLLinkElement;
-    iconLink.href = chrome.runtime.getURL('bootstrap-icons.css');
+    // リソース読み込み待ち（onload/onerror またはタイムアウトで解決）
+    const waitForLoad = (el: HTMLLinkElement | HTMLScriptElement, timeout = 5000) => {
+      return new Promise<void>((resolve) => {
+        let settled = false;
+        const finish = () => {
+          if (settled) return;
+          settled = true;
+          try { (el as any).onload = null; (el as any).onerror = null; } catch { /* noop */ }
+          resolve();
+        };
+        // onload/onerror が使える場合はそれを使う
+        try {
+          (el as any).onload = finish;
+          (el as any).onerror = finish;
+        } catch {
+          // noop
+        }
+        // タイムアウトフォールバック
+        setTimeout(finish, timeout);
+      });
+    };
 
     return new Promise((resolve) => {
-      const handler = () => {
+      const initialize = async () => {
         try {
           const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
           if (!iframeDoc) {
@@ -123,40 +158,55 @@ export class ModalManager {
           }
           this.iframeDoc = iframeDoc;
 
-          this.iframeDoc.head.appendChild(modalStyleLink);
-          this.iframeDoc.head.appendChild(bootstrapLink);
-          this.iframeDoc.head.appendChild(iconLink);
-          this.iframeDoc.head.appendChild(script);
+          // head にリソースを追加
+          const head = iframeDoc.head || iframeDoc.getElementsByTagName('head')[0] || iframeDoc.documentElement;
+          head.appendChild(modalStyleLink);
+          head.appendChild(bootstrapLink);
+          head.appendChild(iconLink);
+          head.appendChild(script);
 
-          // 必要ならここでイベントを追加
-          this.modalEventListeners(this.iframeDoc);
-
-          // iframe 内の UI を初期化
+          // CSS/JS の読み込みを待つ（失敗しても進める）
           try {
-            this._setUpIframeUI(this.iframeDoc);
-            this._setUpInfo(this.iframeDoc);
-          } catch (e) {
-            console.error('Failed to set up iframe info', e);
+            await Promise.all([
+              waitForLoad(modalStyleLink),
+              waitForLoad(bootstrapLink),
+              waitForLoad(iconLink),
+              waitForLoad(script)
+            ]);
+          } catch {
+            // 無視して続行
           }
 
-          resolve(this.iframeDoc);
+          // モーダル内のイベントや UI を初期化
+          this.modalEventListeners(iframeDoc);
+          try {
+            this._setUpIframeUI(iframeDoc);
+            this._setUpInfo(iframeDoc);
+          } catch (e) {
+            // 初期化に失敗しても落とさない
+            console.error('Failed to set up iframe UI/info', e);
+          }
+
+          resolve(iframeDoc);
         } catch (e) {
           resolve(null);
         }
       };
 
-      // 単純に onload をセット
-      iframe.onload = handler;
+      // iframe の load イベントで初期化を行う
+      iframe.addEventListener('load', () => {
+        // 非同期に実行して Promise の挙動を安定させる
+        setTimeout(initialize, 0);
+      }, { once: true });
 
-      // 既に読み込み済みの場合は即時ハンドラを呼ぶ
+      // すでに読み込み済みの場合は即時初期化（次の tick で）
       try {
         const doc = iframe.contentDocument || iframe.contentWindow?.document;
         if (doc && (doc.readyState === 'complete' || doc.readyState === 'interactive')) {
-          // Promise の非同期性を保つため次のtickで実行
-          setTimeout(handler, 0);
+          setTimeout(initialize, 0);
         }
-      } catch (e) {
-        // cross-origin の場合は無視
+      } catch {
+        // cross-origin 等で参照不可なら無視
       }
     });
   }
