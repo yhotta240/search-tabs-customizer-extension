@@ -5,31 +5,10 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 const isDev = process.env.NODE_ENV === "development";
-const plugins = [];
-
-if (isDev) {
-  plugins.push(new ExtensionReloader());
-} else {
-  plugins.push(new CleanWebpackPlugin());
-}
-
-plugins.push(
-  new CopyWebpackPlugin({
-    patterns: [
-      {
-        from: "./public",
-        to: "./"
-      }
-    ]
-  }),
-  new MiniCssExtractPlugin({
-    filename: '[name].css',
-  })
-);
 
 module.exports = {
   mode: isDev ? "development" : "production",
-  devtool: isDev ? "cheap-module-source-map" : false,
+  devtool: isDev ? "inline-source-map" : false,
   entry: {
     background: "./src/background.ts",
     content: "./src/content.ts",
@@ -59,7 +38,20 @@ module.exports = {
       }
     ]
   },
-  plugins: plugins,
+  plugins: (() => {
+    const plugins = [
+      new CopyWebpackPlugin({ patterns: [{ from: "./public", to: "./" }] })
+    ];
+    if (isDev) {
+      plugins.push(new ExtensionReloader());
+    } else {
+      plugins.push(new CleanWebpackPlugin());
+    }
+    plugins.push(new MiniCssExtractPlugin({
+      filename: '[name].css',
+    }));
+    return plugins;
+  })(),
   performance: {
     hints: false
   }
