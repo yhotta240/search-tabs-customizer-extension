@@ -1,4 +1,4 @@
-import { TabInfo } from '../../types/site-adapter';
+import { SiteName, TabInfo } from '../../types/site-adapter';
 import { get, getAll } from '../../utils/dom';
 import { BaseSiteAdapter } from './base';
 
@@ -86,6 +86,10 @@ export class GoogleAdapter extends BaseSiteAdapter {
       this.initialized = true;
       resolve();
     }
+  }
+
+  siteName(): SiteName {
+    return 'google';
   }
 
   async initialize(): Promise<void> {
