@@ -9,14 +9,15 @@ class ContentScript {
 
   constructor() {
     this.modalManager = new ModalManager();
+    this.adapter = SiteAdapter.create(window.location.hostname);
     this._init();
   }
 
   private _init() {
-    this.adapter = SiteAdapter.create(window.location.hostname);
     if (!this.adapter) return;
 
     this._initTabs(this.adapter);
+    this._fetchTabsInfo(this.adapter);
   }
 
   private _initTabs(adapter: ISiteAdapter) {
@@ -30,9 +31,16 @@ class ContentScript {
     if (!tabsContainer || adapter.hasCustomIcon()) {
       return;
     }
-
     iconManager.addIcon(tabsContainer);
+  }
+
+  private async _fetchTabsInfo(adapter: ISiteAdapter) {
+    // GoogleAdapterの場合は初期化を待つ
+    if ('initialize' in adapter && typeof adapter.initialize === 'function') {
+      await adapter.initialize();
+    }
+    const tabs = adapter.findTabsInfo();
   }
 }
 
-const contentScript = new ContentScript();
+new ContentScript();
