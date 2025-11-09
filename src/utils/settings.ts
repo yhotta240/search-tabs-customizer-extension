@@ -1,4 +1,4 @@
-import { Settings, DEFAULT_SETTINGS } from '../settings';
+import { ISettings, DEFAULT_SETTINGS } from '../settings';
 
 /**
  * Chrome拡張機能の設定管理ユーティリティ
@@ -13,10 +13,10 @@ import { Settings, DEFAULT_SETTINGS } from '../settings';
  * @example
  * const theme = await getSetting('theme');
  */
-export function getSetting<K extends keyof Settings>(
+export function getSetting<K extends keyof ISettings>(
   key: K,
-  defaultValue?: Settings[K]
-): Promise<Settings[K]> {
+  defaultValue?: ISettings[K]
+): Promise<ISettings[K]> {
   return new Promise((resolve) => {
     chrome.storage.local.get(['settings'], (data) => {
       const settings = data.settings || {};
@@ -34,9 +34,9 @@ export function getSetting<K extends keyof Settings>(
  * @example
  * await saveSetting('theme', 'dark');
  */
-export function saveSetting<K extends keyof Settings>(
+export function saveSetting<K extends keyof ISettings>(
   key: K,
-  value: Settings[K]
+  value: ISettings[K]
 ): Promise<void> {
   return new Promise((resolve) => {
     chrome.storage.local.get(['settings'], (data) => {
@@ -55,7 +55,7 @@ export function saveSetting<K extends keyof Settings>(
  * @example
  * const allSettings = await getAllSettings();
  */
-export function getAllSettings(): Promise<Settings> {
+export function getAllSettings(): Promise<ISettings> {
   return new Promise((resolve) => {
     chrome.storage.local.get(['settings'], (data) => {
       const settings = { ...DEFAULT_SETTINGS, ...(data.settings || {}) };
@@ -71,7 +71,7 @@ export function getAllSettings(): Promise<Settings> {
  * @example
  * await saveSettings({ theme: 'dark', fontSize: 16, notifications: true });
  */
-export function saveSettings(settings: Partial<Settings>): Promise<void> {
+export function saveSettings(settings: Partial<ISettings>): Promise<void> {
   return new Promise((resolve) => {
     chrome.storage.local.get(['settings'], (data) => {
       const currentSettings = data.settings || {};
@@ -90,7 +90,7 @@ export function saveSettings(settings: Partial<Settings>): Promise<void> {
  * @example
  * await removeSetting('theme');
  */
-export function removeSetting<K extends keyof Settings>(key: K): Promise<void> {
+export function removeSetting<K extends keyof ISettings>(key: K): Promise<void> {
   return new Promise((resolve) => {
     chrome.storage.local.get(['settings'], (data) => {
       const settings = data.settings || {};

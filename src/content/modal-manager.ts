@@ -3,6 +3,8 @@ import { dateTime } from "../utils/date";
 import { ModalPanel } from "../components/modal-panel";
 import meta from '../../public/manifest.meta.json';
 import { getSiteAccessText } from "../utils/permissions";
+import { ISettings } from "settings";
+import { getAllSettings } from "../utils/settings";
 
 /**
  * モーダルウィンドウを管理するクラス
@@ -13,34 +15,35 @@ export class ModalManager {
   private iframe: HTMLIFrameElement | null = null;
   private iframeDoc: Document | null = null;
   private panel: ModalPanel | null = null;
+  private settings!: ISettings;
 
   constructor() {
-    this.loadSettings();
-  }
-
-  private loadSettings(): void {
+    // enabled状態のみコンストラクタで読み込み
     chrome.storage.local.get(['enabled'], (data) => {
       this.enabled = data.enabled ?? true;
     });
   }
 
-  show(): void {
+  async show(): Promise<void> {
     if (this.modalElement) {
       this.modalElement.style.display = 'flex';
       return;
     }
 
-    // モーダルを作成して表示
-    (async () => {
-      this.modalElement = await this.createModal();
-      document.body.appendChild(this.modalElement);
-    })();
+    // 設定を先に読み込んでからモーダルを作成
+    await this._loadSettings();
+    this.modalElement = await this.createModal();
+    document.body.appendChild(this.modalElement);
   }
 
   hide(): void {
     if (this.modalElement) {
       this.modalElement.style.display = 'none';
     }
+  }
+
+  private async _loadSettings(): Promise<void> {
+    this.settings = await getAllSettings();
   }
 
   private async createModal(): Promise<HTMLDivElement> {
@@ -91,9 +94,13 @@ export class ModalManager {
     `;
 
     // iframe のロード完了で UI 初期化を行い、表示する
-    const iframeLoadPromise = this.setupIframeOnLoad(iframe);
-    iframeLoadPromise.then(() => {
+    const iframeLoadPromise = this._setupIframeOnLoad(iframe);
+    iframeLoadPromise.then((doc) => {
       iframe.style.display = 'block';
+      // iframe初期化完了後に設定を反映
+      if (doc) {
+        this._setUpSettings(doc);
+      }
     });
 
     // srcdoc より互換性の高い Blob URL を使用
@@ -109,7 +116,7 @@ export class ModalManager {
     return iframe;
   }
 
-  private setupIframeOnLoad(iframe: HTMLIFrameElement): Promise<Document | null> {
+  private _setupIframeOnLoad(iframe: HTMLIFrameElement): Promise<Document | null> {
     // 要素作成ヘルパー（CSS/JS リソース）
     const makeLink = (href: string) => {
       const l = create('link', { rel: 'stylesheet' }) as HTMLLinkElement;
@@ -213,13 +220,6 @@ export class ModalManager {
     });
   }
 
-  private modalEventListeners(doc: Document): void {
-    const closeButton = get('#modal-close-button', doc);
-    if (closeButton) {
-      closeButton.addEventListener('click', () => this.hide());
-    }
-  }
-
   private _setUpIframeUI(doc: Document): void {
     const modalStyles = get<HTMLLinkElement>('#modal-styles', doc);
     if (modalStyles) {
@@ -261,6 +261,28 @@ export class ModalManager {
     if (titleHeader) titleHeader.textContent = short_name;
     const enabledLabel = get('#enabled-label', doc);
     if (enabledLabel) enabledLabel.textContent = `${short_name} を有効にする`;
+  }
+
+  private modalEventListeners(doc: Document): void {
+    const closeButton = get('#modal-close-button', doc);
+    if (closeButton) {
+      closeButton.addEventListener('click', () => this.hide());
+    }
+  }
+
+  /** 設定のセットアップ */
+  private _setUpSettings(doc: Document): void {
+    const customTabList = get('#custom-tab-list', doc);
+    if (!customTabList || !this.settings) return;
+
+    // 設定からタブリストを構築
+    this.settings.tabs.forEach((tab, index) => {
+      const tabItem = create('div', { className: 'list-group-item list-group-item-action' }) as HTMLDivElement;
+      tabItem.innerHTML = `
+        <span class="tab-title">${tab.title || `タブ ${index + 1}`}</span>
+      `;
+      customTabList.appendChild(tabItem);
+    });
   }
 
   /** 拡張機能の情報をセットアップ */
