@@ -3,6 +3,7 @@ export interface ISiteAdapter {
   findTabs(): Element[] | null;
   findTabsInfo(): TabInfo[] | null;
   hasCustomIcon(): boolean;
+  siteName(): SiteName;
 }
 
 export type TabInfo = {
@@ -10,3 +11,5 @@ export type TabInfo = {
   url: string;
   more?: TabInfo[];
 };
+
+export type SiteName = 'google' | 'bing' | 'duckduckgo' | 'yahoo' | '';

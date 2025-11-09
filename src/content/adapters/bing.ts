@@ -1,3 +1,4 @@
+import { SiteName } from 'types/site-adapter';
 import { get } from '../../utils/dom';
 import { BaseSiteAdapter } from './base';
 
@@ -23,5 +24,9 @@ export class BingAdapter extends BaseSiteAdapter {
       const url = tab.querySelector('a')?.getAttribute('href') || '';
       return { title, url };
     });
+  }
+
+  siteName(): SiteName {
+    return 'bing';
   }
 }

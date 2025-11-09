@@ -1,5 +1,5 @@
 import { get } from '../../utils/dom';
-import { ISiteAdapter, TabInfo } from '../../types/site-adapter';
+import { ISiteAdapter, SiteName, TabInfo } from '../../types/site-adapter';
 
 export abstract class BaseSiteAdapter implements ISiteAdapter {
   protected observers: MutationObserver[] = [];
@@ -7,6 +7,7 @@ export abstract class BaseSiteAdapter implements ISiteAdapter {
   abstract findTabsContainer(): Element | null;
   abstract findTabs(): HTMLElement[] | null;
   abstract findTabsInfo(): TabInfo[] | null;
+  abstract siteName(): SiteName;
 
   hasCustomIcon(): boolean {
     return get('.custom-tab-icon') !== null;
