@@ -1,6 +1,7 @@
 import { SiteName } from 'types/site-adapter';
 import { get } from '../../utils/dom';
 import { BaseSiteAdapter } from './base';
+import { getAllSettings } from '../../utils/settings';
 
 export class BingAdapter extends BaseSiteAdapter {
   findTabsContainer(): Element | null {
@@ -26,7 +27,19 @@ export class BingAdapter extends BaseSiteAdapter {
     });
   }
 
+  showTabs(): void {
+    const tabs = this.findTabs();
+    tabs?.forEach(tab => {
+      tab.style.display = 'none';
+    });
+  }
+
   siteName(): SiteName {
     return 'bing';
+  }
+
+  setUpTabs(): void {
+    const settings = getAllSettings();
+    console.log('BingAdapter settings:', settings);
   }
 }

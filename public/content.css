@@ -1,0 +1,4 @@
+#main div[jscontroller] div[role="list"],
+#main div[jscontroller] div[data-noaftde] {
+  display: none;
+}

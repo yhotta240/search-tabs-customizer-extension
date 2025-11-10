@@ -15,15 +15,16 @@ class ContentScript {
     this.modalManager = new ModalManager();
     this.iconManager = new IconManager();
     this.adapter = SiteAdapter.create(window.location.hostname);
+    this.settings = getAllSettings();
 
     if (this.adapter) {
       this.initialize();
     }
-    this.settings = getAllSettings();
   }
 
   private async initialize(): Promise<void> {
     if (!this.adapter) return;
+    this.adapter.setUpTabs();
 
     // Adapterの初期化を待つ（Google等の動的DOM生成対応）
     if ('initialize' in this.adapter && typeof this.adapter.initialize === 'function') {
@@ -35,6 +36,9 @@ class ContentScript {
 
     // アイコンを表示
     this.setupIcon();
+
+    // タブを表示
+    this.adapter.showTabs();
   }
 
   private async fetchAndSaveTabs(): Promise<void> {

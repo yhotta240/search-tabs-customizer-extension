@@ -1,3 +1,4 @@
+import { getAllSettings } from '../../utils/settings';
 import { SiteName, TabInfo } from '../../types/site-adapter';
 import { get, getAll } from '../../utils/dom';
 import { BaseSiteAdapter } from './base';
@@ -12,7 +13,7 @@ export class GoogleAdapter extends BaseSiteAdapter {
   private initialized = false;
   private initPromise: Promise<void> | null = null;
 
-  findTabsContainer(): Element | null {
+  findTabsContainer(): HTMLElement | null {
     return get('#main div[jscontroller] div[role="list"]');
   }
 
@@ -46,6 +47,25 @@ export class GoogleAdapter extends BaseSiteAdapter {
     }).filter((tab): tab is TabInfo => !!tab.title);
 
     return processedTabs;
+  }
+
+  showTabs(): void {
+    const container = this.findTabsContainer();
+    if (container) {
+      container.style.display = 'flex';
+    }
+    this._showTools();
+  }
+
+  private _findToolsContainer(): HTMLElement | null {
+    return get('#main div[jscontroller] div[data-noaftde]');
+  }
+
+  private _showTools(): void {
+    const toolsContainer = this._findToolsContainer();
+    if (toolsContainer) {
+      toolsContainer.style.display = 'flex';
+    }
   }
 
   // GoogleのJavaScriptが動的にDOM要素を生成するのを待つ
@@ -94,5 +114,23 @@ export class GoogleAdapter extends BaseSiteAdapter {
 
   async initialize(): Promise<void> {
     await this.waitForBsmLinks();
+  }
+
+  /** タブをセットアップ */
+  async setUpTabs(): Promise<void> {
+    const settings = await getAllSettings();
+    const tabs = this.findTabs();
+    if (!settings.google || !tabs) return;
+
+    // 設定に基づいてタブを並び替える
+    settings.google.tabs.forEach((tabSetting, index) => {
+      const tabElement = tabs.find((tab: HTMLElement) => {
+        const text = tab.innerText.replace(/\(function\(\)\{[\s\S]*?\}\)\.call\(this\);?$/, '').trim();
+        return text === tabSetting.title;
+      });
+      if (tabElement) {
+        tabElement.style.order = (-100 + index).toString();
+      }
+    });
   }
 }

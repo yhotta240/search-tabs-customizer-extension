@@ -2,8 +2,10 @@ export interface ISiteAdapter {
   findTabsContainer(): Element | null;
   findTabs(): Element[] | null;
   findTabsInfo(): TabInfo[] | null;
-  hasCustomIcon(): boolean;
+  showTabs(): void;
   siteName(): SiteName;
+  setUpTabs(): void;
+  hasCustomIcon(): boolean;
 }
 
 export type TabInfo = {

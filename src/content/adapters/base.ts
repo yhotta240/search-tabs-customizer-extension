@@ -7,7 +7,9 @@ export abstract class BaseSiteAdapter implements ISiteAdapter {
   abstract findTabsContainer(): Element | null;
   abstract findTabs(): HTMLElement[] | null;
   abstract findTabsInfo(): TabInfo[] | null;
+  abstract showTabs(): void;
   abstract siteName(): SiteName;
+  abstract setUpTabs(): void;
 
   hasCustomIcon(): boolean {
     return get('.custom-tab-icon') !== null;
