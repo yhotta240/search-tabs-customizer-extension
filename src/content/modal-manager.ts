@@ -3,8 +3,10 @@ import { dateTime } from "../utils/date";
 import { ModalPanel } from "../components/modal-panel";
 import meta from '../../public/manifest.meta.json';
 import { getSiteAccessText } from "../utils/permissions";
-import { ISettings } from "settings";
-import { getAllSettings } from "../utils/settings";
+import { ISetting, ISettings } from "settings";
+import { getAllSettings, saveSettings } from "../utils/settings";
+import { ISiteAdapter } from "types/site-adapter";
+import Sortable from "sortablejs";
 
 /**
  * モーダルウィンドウを管理するクラス
@@ -15,7 +17,8 @@ export class ModalManager {
   private iframe: HTMLIFrameElement | null = null;
   private iframeDoc: Document | null = null;
   private panel: ModalPanel | null = null;
-  private settings!: ISettings;
+  private setting!: ISetting;
+  private adapter: ISiteAdapter | null = null;
 
   constructor() {
     // enabled状態のみコンストラクタで読み込み
@@ -24,7 +27,8 @@ export class ModalManager {
     });
   }
 
-  async show(): Promise<void> {
+  async show(adapter: ISiteAdapter | null): Promise<void> {
+    this.adapter = adapter;
     if (this.modalElement) {
       this.modalElement.style.display = 'flex';
       return;
@@ -43,7 +47,9 @@ export class ModalManager {
   }
 
   private async _loadSettings(): Promise<void> {
-    this.settings = await getAllSettings();
+    const siteKey = this.adapter?.siteName() || '';
+    const settings = await getAllSettings();
+    this.setting = settings[siteKey];
   }
 
   private async createModal(): Promise<HTMLDivElement> {
@@ -233,7 +239,7 @@ export class ModalManager {
     const manifestData = chrome.runtime.getManifest();
 
     // load initial state
-    chrome.storage.local.get(['settings', 'enabled'], (data) => {
+    chrome.storage.local.get(['enabled'], (data) => {
       if (enabledElement) {
         const enabled = data.enabled ?? this.enabled;
         enabledElement.checked = enabled;
@@ -273,16 +279,59 @@ export class ModalManager {
   /** 設定のセットアップ */
   private _setUpSettings(doc: Document): void {
     const customTabList = get('#custom-tab-list', doc);
-    if (!customTabList || !this.settings) return;
+    if (!customTabList || !this.setting) return;
 
     // 設定からタブリストを構築
-    this.settings.tabs.forEach((tab, index) => {
+    this.setting.tabs.forEach((tab, index) => {
       const tabItem = create('div', { className: 'list-group-item list-group-item-action' }) as HTMLDivElement;
       tabItem.innerHTML = `
         <span class="tab-title">${tab.title || `タブ ${index + 1}`}</span>
       `;
       customTabList.appendChild(tabItem);
     });
+
+    const sortableBtn = get<HTMLButtonElement>('#sortable-btn', doc);
+
+    if (sortableBtn) {
+      sortableBtn.addEventListener('click', () => {
+        // アイコンを作成
+        const sortableIcon = create('i', { className: 'bi bi-list pe-1 sortable-icon' }) as HTMLElement;
+        sortableIcon.style.cssText = 'font-size: 16px; line-height: 1; cursor: grab;';
+
+        // 各タブにアイコンを挿入、既存があれば表示切り替え
+        Array.from(customTabList.children).forEach(tab => {
+          const existingIcon = tab.querySelector('.sortable-icon') as HTMLElement | null;
+          if (existingIcon) {
+            existingIcon.classList.toggle('d-none');
+          } else {
+            tab.insertBefore(sortableIcon.cloneNode(true), tab.firstChild);
+          }
+        });
+
+        // Sortable 初期化
+        new Sortable(customTabList, {
+          draggable: '.list-group-item',
+          animation: 150,
+          ghostClass: 'sortable-ghost',
+          onEnd: async evt => {
+            const oldIndex = evt.oldIndex as number;
+            const newIndex = evt.newIndex as number;
+
+            // 設定オブジェクト内のタブ順序を更新
+            const movedTab = this.setting!.tabs.splice(oldIndex, 1)[0];
+            this.setting!.tabs.splice(newIndex, 0, movedTab);
+
+            // 設定を保存
+            if (this.adapter) {
+              const update: Partial<ISettings> = {};
+              update[this.adapter.siteName()] = this.setting;
+              await saveSettings(update);
+              if (this.panel) this.panel.messageOutput('タブの並び順が変更されました', dateTime());
+            }
+          }
+        });
+      });
+    }
   }
 
   /** 拡張機能の情報をセットアップ */

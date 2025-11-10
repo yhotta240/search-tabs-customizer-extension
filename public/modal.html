@@ -26,7 +26,7 @@
   </div>
 
   <!-- メニュータブ -->
-  <ul class="nav nav-underline mb-2 mx-1" id="myTab" role="tablist">
+  <ul id="menu-tabs" class="nav nav-underline sticky-top bg-body my-2 px-2" role="tablist">
     <li class="nav-item " role="presentation">
       <a class="nav-link p-1 p-md-2 active" id="settings-tab" data-bs-toggle="tab" href="#settings" role="tab"
         aria-controls="settings " aria-selected="true">設定</a>
@@ -49,7 +49,18 @@
     <!-- 設定 -->
     <div class="tab-pane fade mt-3 mx-2 show active" id="settings" role="tabpanel" style="margin-bottom: 180px;"
       aria-labelledby="settings-tab">
-      <h5 class="">基本設定</h5>
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="">基本設定</h5>
+        <div id="basic-settings" class="btn-group border" role="group" aria-label="Basic mixed styles example">
+          <!-- 並び替えボタン -->
+          <input type="checkbox" id="sortable-btn" class="btn-check" autocomplete="off">
+          <label class="btn btn-outline-secondary text-nowrap btn-sm d-flex align-items-center" title="並び替え"
+            for="sortable-btn" data-action="sortable">
+            <i class="bi bi-filter-left pe-1" style="font-size: 16px; line-height: 1;"></i>
+            並び替え
+          </label>
+        </div>
+      </div>
       <div id="custom-tab-list" class="list-group table-hover"></div>
     </div>
 
@@ -321,11 +332,9 @@
           <div id="message" class="h-100" style="border: 1px solid #ccc; padding: 10px;">
           </div>
         </div>
-        <div id="convertPanel" class="bg-light text-dark p-1 overflow-auto tab-pane fade  h-100" role="tabpanel"
+        <div id="convertPanel" class="bg-light text-dark p-1 overflow-auto tab-pane fade h-100" role="tabpanel"
           aria-labelledby="convert-tab">
-          <div id="convert" class="h-100" style="border: 1px solid #ccc; padding: 10px;">
-
-          </div>
+          <div id="convert" class="h-100" style="border: 1px solid #ccc; padding: 10px;"></div>
         </div>
         <div id="infoPanel" class="bg-light text-dark p-1 overflow-auto tab-pane fade h-100" role="tabpanel"
           aria-labelledby="info-tab">

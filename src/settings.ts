@@ -1,16 +1,18 @@
 import { SiteName, TabInfo } from "types/site-adapter";
 
-/** 設定の型定義 */
 export interface ISettings {
+  [key: string]: ISetting;
+}
+
+/** 設定の型定義 */
+export interface ISetting {
   searchEngine: SiteName;
   tabs: TabInfo[];
+  defaultTabs?: TabInfo[];
 }
 
 /** 設定のデフォルト値 */
-export const DEFAULT_SETTINGS: ISettings = {
-  searchEngine: '',
-  tabs: [],
-};
+export const DEFAULT_SETTINGS: ISettings = {};
 
 /**
  * 設定の説明やバリデーションルール
