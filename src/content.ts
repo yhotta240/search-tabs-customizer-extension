@@ -24,7 +24,6 @@ class ContentScript {
 
   private async initialize(): Promise<void> {
     if (!this.adapter) return;
-    this.adapter.setUpTabs();
 
     // Adapterの初期化を待つ（Google等の動的DOM生成対応）
     if ('initialize' in this.adapter && typeof this.adapter.initialize === 'function') {
@@ -34,11 +33,11 @@ class ContentScript {
     // タブ情報を取得して保存
     await this.fetchAndSaveTabs();
 
-    // アイコンを表示
-    this.setupIcon();
+    this.setupIcon(); // アイコンを表示
 
-    // タブを表示
-    this.adapter.showTabs();
+    this.adapter.setUpTabs(); // タブをセットアップ
+    this.adapter.showTabs(); // タブを表示
+    this.adapter.listenToSettingsChanges(); // 設定変更を監視
   }
 
   private async fetchAndSaveTabs(): Promise<void> {

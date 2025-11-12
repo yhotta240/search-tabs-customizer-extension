@@ -6,6 +6,7 @@ export interface ISiteAdapter {
   siteName(): SiteName;
   setUpTabs(): void;
   hasCustomIcon(): boolean;
+  listenToSettingsChanges(): void;
 }
 
 export type TabInfo = {

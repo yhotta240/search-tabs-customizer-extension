@@ -10,6 +10,7 @@ export abstract class BaseSiteAdapter implements ISiteAdapter {
   abstract showTabs(): void;
   abstract siteName(): SiteName;
   abstract setUpTabs(): void;
+  abstract listenToSettingsChanges(): void;
 
   hasCustomIcon(): boolean {
     return get('.custom-tab-icon') !== null;

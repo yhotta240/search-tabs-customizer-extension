@@ -30,7 +30,7 @@ export class GoogleAdapter extends BaseSiteAdapter {
     // タブ情報を処理する
     const processedTabs = tabs.map(tab => {
       const direct = tab.querySelector('a') as HTMLAnchorElement | null;
-      const title = direct?.innerText?.trim() || '';
+      const title = direct?.textContent?.trim() || '';
       const url = direct?.getAttribute('href') || '';
 
       // 「もっと見る」ボタン内のタブを処理
@@ -49,10 +49,11 @@ export class GoogleAdapter extends BaseSiteAdapter {
     return processedTabs;
   }
 
+  // タブを表示する
   showTabs(): void {
     const container = this.findTabsContainer();
     if (container) {
-      container.style.display = 'flex';
+      container.style.visibility = 'visible';
     }
     this._showTools();
   }
@@ -64,7 +65,7 @@ export class GoogleAdapter extends BaseSiteAdapter {
   private _showTools(): void {
     const toolsContainer = this._findToolsContainer();
     if (toolsContainer) {
-      toolsContainer.style.display = 'flex';
+      toolsContainer.style.visibility = 'visible';
     }
   }
 
@@ -130,6 +131,15 @@ export class GoogleAdapter extends BaseSiteAdapter {
       });
       if (tabElement) {
         tabElement.style.order = (-100 + index).toString();
+      }
+    });
+  }
+
+  listenToSettingsChanges(): void {
+    const onChanged = chrome.storage.local.onChanged;
+    onChanged.addListener((changes: { [key: string]: chrome.storage.StorageChange }) => {
+      if (changes.settings.newValue.google) {
+        this.setUpTabs();
       }
     });
   }
