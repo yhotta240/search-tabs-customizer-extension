@@ -1,45 +1,85 @@
-import { SiteName } from 'types/site-adapter';
-import { get } from '../../utils/dom';
+import { SiteName, TabInfo } from 'types/site-adapter';
+import { get, getAll } from '../../utils/dom';
 import { BaseSiteAdapter } from './base';
 import { getAllSettings } from '../../utils/settings';
 
 export class BingAdapter extends BaseSiteAdapter {
-  findTabsContainer(): Element | null {
-    return get('nav[role="navigation"] ul');
+  findTabsContainer(): HTMLElement | null {
+    return get('nav[role="navigation"]');
   }
 
   findTabs(): HTMLElement[] | null {
     const container = this.findTabsContainer();
     if (!container) return null;
-    return Array.from(container.querySelectorAll('li')) as HTMLElement[];
+    get('ul', container)?.style.setProperty('display', 'flex');
+    return Array.from(getAll('ul li', container)) as HTMLElement[];
   }
 
-  findTabsInfo(): { title: string; url: string }[] | null {
+  findTabsInfo(): TabInfo[] | null {
     const tabs = this.findTabs();
     if (!tabs) return null;
+    const tabsInfo: TabInfo[] = [];
 
-    return tabs.map(tab => {
-      const title = tab.querySelector('h3')?.innerText || '';
-      const url = tab.querySelector('a')?.getAttribute('href') || '';
-      return { title, url };
+    tabs.forEach(tab => {
+      const title = tab.textContent || '';
+      const link = get<HTMLAnchorElement>('a', tab);
+      if (!link) return { title, url: '' };
+      if (tab.classList.contains('b_sp_over_item')) return;
+
+      // さらに表示
+      if (link.target === '_self') {
+        const moreTitle = link.textContent || '';
+        const moreTabs = getAll('li.b_sp_over_item a', tab).map(a => ({
+          title: a.textContent?.trim() || '',
+          url: a.getAttribute('href') || '',
+        })).filter(m => m.title);
+
+        tabsInfo.push({ title: moreTitle, url: '', more: moreTabs });
+        return;
+      }
+
+      tabsInfo.push({ title, url: link.href || '' });
     });
+
+    return tabsInfo;
   }
 
   showTabs(): void {
-    const tabs = this.findTabs();
-    tabs?.forEach(tab => {
-      tab.style.display = 'none';
-    });
+    const container = this.findTabsContainer();
+    if (container) {
+      // Bingのタブ内を横並びに表示するためにflexに設定
+      container.style.display = 'flex';
+      container.style.visibility = 'visible';
+    }
   }
 
   siteName(): SiteName {
     return 'bing';
   }
 
-  setUpTabs(): void {
-    const settings = getAllSettings();
-    console.log('BingAdapter settings:', settings);
+  async setUpTabs(): Promise<void> {
+    const settings = await getAllSettings();
+    const tabs = this.findTabs();
+    if (!settings.bing || !tabs) return;
+
+    // 設定に基づいてタブを並び替える
+    settings.bing.tabs.forEach((tabSetting, index) => {
+      const tabElement = tabs.find((tab: HTMLElement) => {
+        const text = tab.textContent?.trim() || '';
+        return text === tabSetting.title;
+      });
+      if (tabElement) {
+        tabElement.style.order = (-100 + index).toString();
+      }
+    });
   }
 
-  listenToSettingsChanges(): void { }
+  listenToSettingsChanges(): void {
+    const onChanged = chrome.storage.local.onChanged;
+    onChanged.addListener((changes: { [key: string]: chrome.storage.StorageChange }) => {
+      if (changes.settings.newValue.bing) {
+        this.setUpTabs();
+      }
+    });
+  }
 }

@@ -2,3 +2,7 @@
 #main div[jscontroller] div[data-noaftde] {
   visibility: hidden;
 }
+
+nav[role="navigation"] {
+  visibility: hidden;
+}
