@@ -281,57 +281,92 @@ export class ModalManager {
     const customTabList = get('#custom-tab-list', doc);
     if (!customTabList || !this.setting) return;
 
-    // 設定からタブリストを構築
+    const sortableBtn = get<HTMLInputElement>('#sortable-btn', doc);
+    const defaultBtn = get<HTMLButtonElement>('#default-btn', doc);
+
+    // タブリストを完全にクリア
+    customTabList.innerHTML = '';
+    // 並び替えモードが残っているなら解除（ループ内で毎回行わない）
+    if (sortableBtn && sortableBtn.checked) sortableBtn.checked = false;
+
+    // 設定からタブリストを構築（タブアイテムの簡単な生成はここに戻す）
     this.setting.tabs.forEach((tab, index) => {
-      const tabItem = create('div', { className: 'list-group-item list-group-item-action' }) as HTMLDivElement;
-      tabItem.innerHTML = `
-        <span class="tab-title">${tab.title || `タブ ${index + 1}`}</span>
-      `;
+      const tabItem = create('div', { id: `tab-item-${index}`, className: 'list-group-item list-group-item-action' }) as HTMLDivElement;
+      tabItem.innerHTML = `<span class="tab-title">${tab.title || `タブ ${index + 1}`}</span>`;
       customTabList.appendChild(tabItem);
     });
 
-    const sortableBtn = get<HTMLButtonElement>('#sortable-btn', doc);
+    // ボタンのセットアップ（クローンしてイベントの重複を避ける）
+    if (sortableBtn) this._setupSortableToggle(customTabList, sortableBtn);
 
-    if (sortableBtn) {
-      sortableBtn.addEventListener('click', () => {
-        // アイコンを作成
-        const sortableIcon = create('i', { className: 'bi bi-list pe-1 sortable-icon' }) as HTMLElement;
-        sortableIcon.style.cssText = 'font-size: 16px; line-height: 1; cursor: grab;';
+    if (defaultBtn) {
+      const newDefaultBtn = defaultBtn.cloneNode(true) as HTMLButtonElement;
+      defaultBtn.parentNode?.replaceChild(newDefaultBtn, defaultBtn);
+      newDefaultBtn.addEventListener('click', async () => {
 
-        // 各タブにアイコンを挿入、既存があれば表示切り替え
-        Array.from(customTabList.children).forEach(tab => {
-          const existingIcon = tab.querySelector('.sortable-icon') as HTMLElement | null;
-          if (existingIcon) {
-            existingIcon.classList.toggle('d-none');
-          } else {
-            tab.insertBefore(sortableIcon.cloneNode(true), tab.firstChild);
-          }
-        });
+        // デフォルトに戻すかどうか確認
+        const confirmed = await this.confirmModal(doc, 'タブの設定をデフォルトに戻しますか？');
+        if (!confirmed) return;
 
-        // Sortable 初期化
-        new Sortable(customTabList, {
-          draggable: '.list-group-item',
-          animation: 150,
-          ghostClass: 'sortable-ghost',
-          onEnd: async evt => {
-            const oldIndex = evt.oldIndex as number;
-            const newIndex = evt.newIndex as number;
+        if (!this.adapter) return;
+        const settings = await getAllSettings();
+        const siteKey = this.adapter.siteName() || '';
+        const siteSetting = settings[siteKey];
+        if (!siteSetting || !siteSetting.defaultTabs) return;
 
-            // 設定オブジェクト内のタブ順序を更新
-            const movedTab = this.setting!.tabs.splice(oldIndex, 1)[0];
-            this.setting!.tabs.splice(newIndex, 0, movedTab);
+        this.setting.tabs = siteSetting.defaultTabs;
+        await saveSettings({ [siteKey]: this.setting });
+        if (this.panel) this.panel.messageOutput('タブがデフォルトにリセットされました', dateTime());
 
-            // 設定を保存
-            if (this.adapter) {
-              const update: Partial<ISettings> = {};
-              update[this.adapter.siteName()] = this.setting;
-              await saveSettings(update);
-              if (this.panel) this.panel.messageOutput('タブの並び順が変更されました', dateTime());
-            }
-          }
-        });
+        if (sortableBtn) {
+          const a = sortableBtn.nextElementSibling as HTMLElement | null;
+          a?.click(); // 並び替えモードを再適用
+        }
+
+        // 再構築
+        this._setUpSettings(doc);
       });
     }
+  }
+
+  /** 並び替えトグルのセットアップ */
+  private _setupSortableToggle(customTabList: Element, sortableBtn: HTMLInputElement): void {
+    const newSortableBtn = sortableBtn.cloneNode(true) as HTMLInputElement;
+    sortableBtn.parentNode?.replaceChild(newSortableBtn, sortableBtn);
+
+    newSortableBtn.addEventListener('click', () => {
+      const sortableIcon = create('i', { className: 'bi bi-list pe-1 sortable-icon' }) as HTMLElement;
+      sortableIcon.style.cssText = 'font-size: 16px; line-height: 1; cursor: grab;';
+
+      Array.from(customTabList.children).forEach(tab => {
+        const existingIcon = get<HTMLElement>('.sortable-icon', tab);
+        if (existingIcon) {
+          existingIcon.classList.toggle('d-none');
+        } else {
+          tab.insertBefore(sortableIcon.cloneNode(true), tab.firstChild);
+        }
+      });
+
+      // Sortable 初期化
+      new Sortable(customTabList as HTMLElement, {
+        draggable: '.list-group-item',
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        onEnd: async evt => {
+          const oldIndex = evt.oldIndex as number;
+          const newIndex = evt.newIndex as number;
+          const movedTab = this.setting!.tabs.splice(oldIndex, 1)[0];
+          this.setting!.tabs.splice(newIndex, 0, movedTab);
+
+          if (this.adapter) {
+            const update: Partial<ISettings> = {};
+            update[this.adapter.siteName()] = this.setting;
+            await saveSettings(update);
+            if (this.panel) this.panel.messageOutput('タブの並び順が変更されました', dateTime());
+          }
+        }
+      });
+    });
   }
 
   /** 拡張機能の情報をセットアップ */
@@ -400,5 +435,25 @@ export class ModalManager {
         chrome.runtime.sendMessage({ action: "open-page", url: githubLink.href });
       });
     }
+  }
+
+  // 確認モーダルを表示して結果を返す
+  private confirmModal(doc: Document, messageText: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      const overlay = create('div', { className: 'overlay' }) as HTMLDivElement;
+      const dialog = create('div', { className: 'modal-dialog-element' }) as HTMLDivElement;
+      const message = create('p', { textContent: messageText }) as HTMLParagraphElement;
+
+      const buttons = create('div', { className: 'modal-buttons' }) as HTMLDivElement;
+      const noBtn = create('button', { className: 'btn btn-secondary', textContent: 'いいえ' }) as HTMLButtonElement;
+      const yesBtn = create('button', { className: 'btn btn-primary', textContent: 'はい' }) as HTMLButtonElement;
+      noBtn.onclick = () => { overlay.remove(); resolve(false); };
+      yesBtn.onclick = () => { overlay.remove(); resolve(true); };
+
+      buttons.append(noBtn, yesBtn);
+      dialog.append(message, buttons);
+      overlay.appendChild(dialog);
+      doc.body.appendChild(overlay);
+    });
   }
 }
