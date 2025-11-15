@@ -385,13 +385,17 @@ export class ModalManager {
         existingIcons.forEach(icon => icon.classList.toggle('d-none', !checked));
       } else {
         Array.from(customTabList.children).forEach(tab => {
-          const icon = create('i', { className: 'bi bi-eye pe-1 visible-icon' }) as HTMLElement;
+          const isHidden = tab.classList.contains('bg-secondary');
+          const icon = create('i', { className: `bi ${isHidden ? 'bi-eye-slash' : 'bi-eye'} pe-1 visible-icon` }) as HTMLElement;
           icon.style.cssText = 'font-size: 16px; line-height: 1; cursor: pointer;';
           tab.insertBefore(icon, tab.firstChild);
 
           icon.addEventListener('click', async () => {
-            tab.classList.toggle('bg-secondary');
             if (!this.adapter) return;
+
+            tab.classList.toggle('bg-secondary');
+            icon.classList.toggle('bi-eye-slash');
+            icon.classList.toggle('bi-eye');
 
             const update: Partial<ISettings> = { [this.adapter.siteName()]: this.setting };
             update[this.adapter.siteName()]?.tabs.forEach((t, i) => {
