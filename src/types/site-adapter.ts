@@ -12,6 +12,7 @@ export interface ISiteAdapter {
 export type TabInfo = {
   title: string;
   url: string;
+  visible?: boolean;
   more?: TabInfo[];
 };
 

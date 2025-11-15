@@ -1,4 +1,4 @@
-import { create, get } from "../utils/dom";
+import { create, get, getAll } from "../utils/dom";
 import { dateTime } from "../utils/date";
 import { ModalPanel } from "../components/modal-panel";
 import meta from '../../public/manifest.meta.json';
@@ -282,22 +282,27 @@ export class ModalManager {
     if (!customTabList || !this.setting) return;
 
     const sortableBtn = get<HTMLInputElement>('#sortable-btn', doc);
+    const visibleBtn = get<HTMLInputElement>('#visible-btn', doc);
     const defaultBtn = get<HTMLButtonElement>('#default-btn', doc);
 
     // タブリストを完全にクリア
     customTabList.innerHTML = '';
     // 並び替えモードが残っているなら解除（ループ内で毎回行わない）
     if (sortableBtn && sortableBtn.checked) sortableBtn.checked = false;
+    if (visibleBtn && visibleBtn.checked) visibleBtn.checked = false;
 
     // 設定からタブリストを構築（タブアイテムの簡単な生成はここに戻す）
     this.setting.tabs.forEach((tab, index) => {
-      const tabItem = create('div', { id: `tab-item-${index}`, className: 'list-group-item list-group-item-action' }) as HTMLDivElement;
+      const visibleClass = tab.visible !== false ? '' : 'bg-secondary';
+      const tabItem = create('div', { id: `tab-item-${index}`, className: `list-group-item list-group-item-action ${visibleClass}` }) as HTMLDivElement;
       tabItem.innerHTML = `<span class="tab-title">${tab.title || `タブ ${index + 1}`}</span>`;
       customTabList.appendChild(tabItem);
     });
 
     // ボタンのセットアップ（クローンしてイベントの重複を避ける）
     if (sortableBtn) this._setupSortableToggle(customTabList, sortableBtn);
+
+    if (visibleBtn) this._setUpVisibilityToggle(customTabList, visibleBtn);
 
     if (defaultBtn) {
       const newDefaultBtn = defaultBtn.cloneNode(true) as HTMLButtonElement;
@@ -366,6 +371,42 @@ export class ModalManager {
           }
         }
       });
+    });
+  }
+
+  /** タブの表示切替 */
+  private _setUpVisibilityToggle(customTabList: Element, visibleBtn: HTMLInputElement): void {
+
+    visibleBtn.addEventListener('change', async (event) => {
+      const existingIcons = getAll<HTMLElement>('.visible-icon', customTabList);
+      const checked = (event.target as HTMLInputElement).checked;
+
+      if (existingIcons.length > 0) {
+        existingIcons.forEach(icon => icon.classList.toggle('d-none', !checked));
+      } else {
+        Array.from(customTabList.children).forEach(tab => {
+          const isHidden = tab.classList.contains('bg-secondary');
+          const icon = create('i', { className: `bi ${isHidden ? 'bi-eye-slash' : 'bi-eye'} pe-1 visible-icon` }) as HTMLElement;
+          icon.style.cssText = 'font-size: 16px; line-height: 1; cursor: pointer;';
+          tab.insertBefore(icon, tab.firstChild);
+
+          icon.addEventListener('click', async () => {
+            if (!this.adapter) return;
+
+            tab.classList.toggle('bg-secondary');
+            icon.classList.toggle('bi-eye-slash');
+            icon.classList.toggle('bi-eye');
+
+            const update: Partial<ISettings> = { [this.adapter.siteName()]: this.setting };
+            update[this.adapter.siteName()]?.tabs.forEach((t, i) => {
+              t.visible = !customTabList.children[i].classList.contains('bg-secondary');
+            });
+            await saveSettings(update);
+
+            if (this.panel) this.panel.messageOutput('タブの表示が変更されました', dateTime());
+          });
+        });
+      }
     });
   }
 

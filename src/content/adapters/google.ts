@@ -123,14 +123,17 @@ export class GoogleAdapter extends BaseSiteAdapter {
     const tabs = this.findTabs();
     if (!settings.google || !tabs) return;
 
-    // 設定に基づいてタブを並び替える
     settings.google.tabs.forEach((tabSetting, index) => {
       const tabElement = tabs.find((tab: HTMLElement) => {
         const text = tab.innerText.replace(/\(function\(\)\{[\s\S]*?\}\)\.call\(this\);?$/, '').trim();
         return text === tabSetting.title;
       });
       if (tabElement) {
+        // タブの順序を設定
         tabElement.style.order = (-100 + index).toString();
+
+        // タブの表示・非表示を設定
+        tabElement.classList.toggle('hidden-tab', tabSetting.visible === false);
       }
     });
   }

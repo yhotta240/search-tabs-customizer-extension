@@ -69,7 +69,11 @@ export class BingAdapter extends BaseSiteAdapter {
         return text === tabSetting.title;
       });
       if (tabElement) {
+        // タブの順序を設定
         tabElement.style.order = (-100 + index).toString();
+
+        // タブの表示・非表示を設定
+        tabElement.classList.toggle('hidden-tab', tabSetting.visible === false);
       }
     });
   }
