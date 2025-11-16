@@ -62,7 +62,7 @@ export class YahooAdapter extends BaseSiteAdapter {
   listenToSettingsChanges(): void {
     const onChanged = chrome.storage.local.onChanged;
     onChanged.addListener((changes: { [key: string]: chrome.storage.StorageChange }) => {
-      if (changes.settings.newValue.yahoo) {
+      if (changes.settings && changes.settings.newValue?.yahoo) {
         this.setUpTabs();
       }
     });

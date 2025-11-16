@@ -15,7 +15,7 @@ export class SiteAdapter {
       return new BingAdapter();
     }
 
-    if (/(^|\.)yahoo\./i.test(hostname)) {
+    if (/(^|\.)yahoo.co.jp/i.test(hostname)) {
       return new YahooAdapter();
     }
 
