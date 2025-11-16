@@ -70,22 +70,6 @@
       <div id="custom-tab-list" class="list-group table-hover"></div>
     </div>
 
-    <!-- 概要 -->
-    <div class="tab-pane fade mt-2 mx-2" id="description" role="tabpanel" style="margin-bottom: 200px;"
-      aria-labelledby="description-tab">
-      <div>
-        <h5>概要</h5>
-        <p class="my-1 fw-bold">説明:</p>
-        <p>
-          このChrome拡張機能を使えば，○○できます．
-        </p>
-        <p class="my-1 fw-bold">拡張機能の主な特徴:</p>
-        <p class="mt-1">機能の説明を書く</p>
-        <p class="my-1 fw-bold">注意点:</p>
-        <p class="mt-1">注意点を書く</p>
-      </div>
-    </div>
-
     <!-- ドキュメント -->
     <div class="tab-pane fade mt-2 mx-2" id="document" role="tabpanel" style="margin-bottom: 200px;"
       aria-labelledby="document-tab">
@@ -102,13 +86,22 @@
             <div class="accordion-body p-3">
               <p class="my-1 fw-bold">説明:</p>
               <p>
-                このChrome拡張機能を使えば，○○できます．
+                このChrome拡張機能を使えば，Google や Bing などの検索結果ページ内のタブを自由にカスタマイズできます．
               </p>
               <p class="my-1 fw-bold">拡張機能の主な特徴:</p>
               <div class="mt-1">
                 <ol>
                   <li class="mb-2">
-                    特徴をここに書く
+                    <strong>タブの並び替え</strong>: ドラッグ&ドロップで検索タブの順序を自由に変更できます
+                  </li>
+                  <li class="mb-2">
+                    <strong>タブの表示/非表示</strong>: 使わないタブを非表示にしてスッキリ表示できます
+                  </li>
+                  <li class="mb-2">
+                    <strong>設定の保存</strong>: カスタマイズした設定はサイトごとに自動保存されます
+                  </li>
+                  <li class="mb-2">
+                    <strong>複数サイト対応</strong>: Google, Bing, Yahoo! Japan に対応しています
                   </li>
                 </ol>
               </div>
@@ -116,7 +109,13 @@
               <div class="mt-1">
                 <ol>
                   <li class="mb-2">
-                    注意点を書く
+                    設定は各検索サイトごとに個別に保存されます
+                  </li>
+                  <li class="mb-2">
+                    設定変更はリアルタイムで反映されます（ページリロード不要）
+                  </li>
+                  <li class="mb-2">
+                    「デフォルト」ボタンをクリックすると，初期状態に戻ります
                   </li>
                 </ol>
               </div>
@@ -143,24 +142,30 @@
                   <img src="https://storage.googleapis.com/support-kms-prod/pPIeCzvFrMFIBxrrrWuHfxU58Rx9xBLyyv7F"
                     alt="拡張機能" height="18"> を選択します．
                 </li>
-                <li>「Sample - サンプル」を選択します．（固定を指定しておくと，常に表示されます）</li>
+                <li>「Search Tabs Customizer」を選択します．（固定を指定しておくと，常に表示されます）</li>
               </ol>
 
               <p class="mb-1 fw-bold">
-                Sampleを有効にする
+                カスタマイズを開始する
               </p>
-              <ul class="m-1">
-                <li>拡張機能のポップアップを開き，「Sampleを有効にする」のトグルボタンをクリック
-                  <div>無効にする場合も同じ操作を行ってください．</div>
-                </li>
-              </ul>
+              <ol class="m-1">
+                <li>Google, Bing, Yahoo! Japan のいずれかで検索を実行します</li>
+                <li>検索結果ページに表示される拡張機能アイコンをクリックします</li>
+                <li>設定モーダルが開きます</li>
+              </ol>
 
               <p class="mb-1 fw-bold">
-                設定
+                基本設定
               </p>
               <ul>
                 <li>
-                  設定をここに書く
+                  <strong>並び替え</strong>: 「並び替え」ボタンをクリックし，タブをドラッグ&ドロップして順序を変更します
+                </li>
+                <li>
+                  <strong>表示切替</strong>: 「表示」ボタンをクリックし，各タブの目アイコンをクリックして表示/非表示を切り替えます
+                </li>
+                <li>
+                  <strong>デフォルトに戻す</strong>: 「デフォルト」ボタンをクリックすると，初期状態に戻ります
                 </li>
               </ul>
 
@@ -168,7 +173,9 @@
                 操作方法
               </p>
               <ul>
-                <li>操作方法をここに書く</li>
+                <li>設定はリアルタイムで反映されます（ページリロード不要）</li>
+                <li>設定は自動的に保存されます</li>
+                <li>各検索サイトごとに個別に設定を保存できます</li>
               </ul>
             </div>
           </div>
@@ -182,9 +189,44 @@
       <ul class="list-group list-group-flush">
         <h5 class="pt-3 ps-2 mb-2">更新履歴</h5>
         <li class="list-group-item">
-          <strong>v1.0.0</strong>
+          <strong>v0.5.0</strong>
+          <span class="badge bg-primary">最新</span>
+          <ul class="small mt-1">
+            <li>Yahoo! Japan 検索に対応</li>
+            <li>タブの並び替え機能を追加</li>
+            <li>タブの表示/非表示機能を追加</li>
+            <li>設定のリセット機能を追加</li>
+            <li>UI/UX の改善</li>
+          </ul>
+        </li>
+        <li class="list-group-item">
+          <strong>v0.4.0</strong>
+          <ul class="small mt-1">
+            <li>Bing 検索に対応</li>
+            <li>サイトアダプター機構の実装</li>
+            <li>設定保存機能の改善</li>
+          </ul>
+        </li>
+        <li class="list-group-item">
+          <strong>v0.3.0</strong>
+          <ul class="small mt-1">
+            <li>Google 検索のタブカスタマイズ機能を実装</li>
+            <li>「もっと見る」ボタン内のサブタブに対応</li>
+            <li>設定モーダルの UI を改善</li>
+          </ul>
+        </li>
+        <li class="list-group-item">
+          <strong>v0.2.0</strong>
+          <ul class="small mt-1">
+            <li>基本的なタブ操作機能を追加</li>
+            <li>設定保存機能を追加</li>
+          </ul>
+        </li>
+        <li class="list-group-item">
+          <strong>v0.1.0</strong>
           <ul class="small mt-1">
             <li>初回リリース</li>
+            <li>基本機能の実装</li>
           </ul>
         </li>
       </ul>
