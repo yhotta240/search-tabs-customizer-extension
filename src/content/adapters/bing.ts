@@ -5,14 +5,14 @@ import { getAllSettings } from '../../utils/settings';
 
 export class BingAdapter extends BaseSiteAdapter {
   findTabsContainer(): HTMLElement | null {
-    return get('nav[role="navigation"]');
+    return get('nav[role="navigation"] ul');
   }
 
   findTabs(): HTMLElement[] | null {
     const container = this.findTabsContainer();
     if (!container) return null;
-    get('ul', container)?.style.setProperty('display', 'flex');
-    return Array.from(getAll('ul li', container)) as HTMLElement[];
+    container.style.setProperty('display', 'flex');
+    return Array.from(getAll('li', container)) as HTMLElement[];
   }
 
   findTabsInfo(): TabInfo[] | null {
@@ -47,8 +47,6 @@ export class BingAdapter extends BaseSiteAdapter {
   showTabs(): void {
     const container = this.findTabsContainer();
     if (container) {
-      // Bingのタブ内を横並びに表示するためにflexに設定
-      container.style.display = 'flex';
       container.style.visibility = 'visible';
     }
   }
