@@ -1,9 +1,12 @@
+/* google */
 #main div[jscontroller] div[role="list"],
 #main div[jscontroller] div[data-noaftde] {
   visibility: hidden;
 }
 
-nav[role="navigation"] {
+/* bing */
+/* yahoo */
+header nav ul {
   visibility: hidden;
 }
 

@@ -1,6 +1,7 @@
 import { ISiteAdapter } from '../../types/site-adapter';
 import { GoogleAdapter } from './google';
 import { BingAdapter } from './bing';
+import { YahooAdapter } from './yahoo';
 
 export class SiteAdapter {
 
@@ -12,6 +13,10 @@ export class SiteAdapter {
 
     if (/(^|\.)bing\./i.test(hostname)) {
       return new BingAdapter();
+    }
+
+    if (/(^|\.)yahoo.co.jp/i.test(hostname)) {
+      return new YahooAdapter();
     }
 
     return null;
