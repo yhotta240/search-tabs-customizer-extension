@@ -1,6 +1,5 @@
 /* google */
-#main div[jscontroller] div[role="list"],
-#main div[jscontroller] div[data-noaftde] {
+#main div[data-st-cnt="fb"] div[jscontroller] div[role="list"] {
   visibility: hidden;
 }
 
