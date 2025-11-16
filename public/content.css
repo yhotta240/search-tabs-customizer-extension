@@ -5,10 +5,6 @@
 }
 
 /* bing */
-nav[role="navigation"] {
-  visibility: hidden;
-}
-
 /* yahoo */
 header nav ul {
   visibility: hidden;
