@@ -13,7 +13,6 @@ import Sortable from "sortablejs";
  */
 export class ModalManager {
   private modalElement: HTMLElement | null = null;
-  private enabled: boolean = true;
   private iframe: HTMLIFrameElement | null = null;
   private iframeDoc: Document | null = null;
   private panel: ModalPanel | null = null;
@@ -21,10 +20,6 @@ export class ModalManager {
   private adapter: ISiteAdapter | null = null;
 
   constructor() {
-    // enabled状態のみコンストラクタで読み込み
-    chrome.storage.local.get(['enabled'], (data) => {
-      this.enabled = data.enabled ?? true;
-    });
   }
 
   async show(adapter: ISiteAdapter | null): Promise<void> {
@@ -235,27 +230,10 @@ export class ModalManager {
     // create panel UI helper
     this.panel = new ModalPanel(doc);
 
-    const enabledElement = get<HTMLInputElement>('#enabled', doc);
     const manifestData = chrome.runtime.getManifest();
 
-    // load initial state
-    chrome.storage.local.get(['enabled'], (data) => {
-      if (enabledElement) {
-        const enabled = data.enabled ?? this.enabled;
-        enabledElement.checked = enabled;
-      }
-      if (this.panel) this.panel.messageOutput(`${manifestData.short_name} が起動しました`, dateTime());
-    });
-
-    // enabled toggle listener (additional to attachEventListeners)
-    if (enabledElement) {
-      enabledElement.addEventListener('change', (event) => {
-        const checked = (event.target as HTMLInputElement).checked;
-        chrome.storage.local.set({ enabled: checked }, () => {
-          if (this.panel) this.panel.messageOutput(checked ? `${manifestData.short_name} は有効になっています` : `${manifestData.short_name} は無効になっています`, dateTime());
-        });
-      });
-    }
+    // output startup message
+    if (this.panel) this.panel.messageOutput(`${manifestData.short_name} が起動しました`, dateTime());
 
     // initialize UI texts and links
     const short_name = manifestData.short_name || manifestData.name;
@@ -265,8 +243,6 @@ export class ModalManager {
     if (titleIcon) titleIcon.src = chrome.runtime.getURL('icons/icon.png');
     const titleHeader = get('#title-header', doc);
     if (titleHeader) titleHeader.textContent = short_name;
-    const enabledLabel = get('#enabled-label', doc);
-    if (enabledLabel) enabledLabel.textContent = `${short_name} を有効にする`;
   }
 
   private modalEventListeners(doc: Document): void {
