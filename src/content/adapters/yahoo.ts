@@ -18,11 +18,9 @@ export class YahooAdapter extends BaseSiteAdapter {
     const tabs = this.findTabs();
     if (!tabs) return null;
     const tabsInfo: TabInfo[] = [];
-    console.log(tabs);
     tabs.forEach(tab => {
       const title = tab.textContent || '';
       const link = get<HTMLAnchorElement>('a', tab);
-      console.log(title, link);
       tabsInfo.push({ title, url: link?.href || '' });
     });
 
