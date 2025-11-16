@@ -14,7 +14,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://www.google.com/*", "https://www.bing.com/*"],
+      "matches": ["https://www.google.com/*", "https://www.bing.com/*", "https://search.yahoo.co.jp/*"],
       "js": ["content.js"],
       "css": ["content.css"]
     }
@@ -22,7 +22,7 @@
   "web_accessible_resources": [
     {
       "resources": ["icons/*.png", "modal.html", "*.css", "*.js", "*.woff2", "*.woff"],
-      "matches": ["https://www.google.com/*", "https://www.bing.com/*"]
+      "matches": ["https://www.google.com/*", "https://www.bing.com/*", "https://search.yahoo.co.jp/*"]
     }
   ]
 }
