@@ -1,6 +1,6 @@
 {
-  "name": "chrome-extension-starter-kit",
-  "version": "0.5.0",
+  "name": "search-tabs-customizer-extension",
+  "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
